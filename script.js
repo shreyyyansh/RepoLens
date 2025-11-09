@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/analyze";
+const API_URL = "https://repolens-backend.onrender.com/analyze";
 
 const orgInput = document.getElementById("orgName");
 const analyzeButton = document.getElementById("analyzeButton");
