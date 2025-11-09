@@ -1,0 +1,68 @@
+@startuml
+!theme vibrant
+
+title AWS Repo Explorer Agent - Sequence Diagram
+
+actor User
+participant "Browser (S3 Frontend)" as Frontend
+participant "AWS API Gateway" as APIGW
+participant "AWS Lambda\n(githubRepoAnalyzer)" as Lambda
+participant "GitHub API" as GitHub
+participant "Amazon Bedrock" as Bedrock
+participant "Amazon DynamoDB\n(RepoInsights Table)" as DynamoDB
+
+skinparam actor {
+    backgroundColor #E0F2FE
+}
+skinparam participant {
+    backgroundColor #E0F2FE
+}
+skinparam sequence {
+    lifeLineBackgroundColor #F0F2F5
+}
+
+User -> Frontend: Enters "vercel" & clicks 'Analyze'
+
+activate Frontend
+Frontend -> APIGW: POST /v1/analyze \n{ "org": "vercel" }
+activate APIGW
+
+APIGW -> Lambda: Triggers function (proxy event)
+activate Lambda
+
+Lambda -> GitHub: GET /orgs/vercel/repos\n(w/ Auth Token)
+activate GitHub
+GitHub --> Lambda: 200 OK [Repo List JSON]
+deactivate GitHub
+
+Lambda -> Lambda: Parses repo list
+
+loop for each repo (e.g., 15 times)
+    
+    Lambda -> GitHub: GET /repos/vercel/{repo}/readme
+    activate GitHub
+    GitHub --> Lambda: 200 OK [README content]
+    deactivate GitHub
+    
+    Lambda -> Bedrock: invoke_model (Claude 3 Haiku)\n(prompt + README content)
+    activate Bedrock
+    Bedrock --> Lambda: [AI-generated summary]
+    deactivate Bedrock
+    
+    Lambda -> DynamoDB: put_item\n(org, repo, stars, summary, etc.)
+    activate DynamoDB
+    DynamoDB --> Lambda: 200 OK (Write Confirmed)
+    deactivate DynamoDB
+    
+end
+
+Lambda --> APIGW: 200 OK [Full Report JSON]
+deactivate Lambda
+
+APIGW --> Frontend: 200 OK [Full Report JSON]
+deactivate APIGW
+
+Frontend -> User: Renders "Analysis Report" cards
+deactivate Frontend
+
+@enduml

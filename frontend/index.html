@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RepoLens — AI-Powered Repository Explorer</title>
+  <meta name="description" content="RepoLens analyzes GitHub organizations and presents AI-generated repository insights." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="background">
+    <div class="gradient"></div>
+  </div>
+
+  <div class="content">
+    <header>
+      <h1>RepoLens</h1>
+      <span>AI-Powered Repository Explorer</span>
+    </header>
+
+    <main>
+      <!-- Search / Analyze panel -->
+      <section class="hero-section">
+        <h2>Analyze GitHub Organizations</h2>
+        <p>
+          Enter a GitHub organization name to view concise, AI-generated summaries and key repository metrics.
+        </p>
+
+        <div class="input-form">
+          <input
+            type="text"
+            id="orgName"
+            placeholder="e.g., vercel, aws-samples, freeCodeCamp"
+            autocomplete="off" />
+          <button id="analyzeButton">Analyze</button>
+        </div>
+      </section>
+
+      <!-- Results Header Bar -->
+      <div id="results-header-bar" class="results-header-bar" style="display: none;">
+        <h2 id="results-header">Analysis Report</h2>
+        <div id="sort-container" class="sort-container">
+          <label for="sortSelect">Sort by:</label>
+          <select id="sortSelect">
+            <option value="stars">Stars ⭐</option>
+            <option value="name">Name (A–Z)</option>
+            <option value="updated">Last Updated</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Results Area -->
+      <section id="output-area">
+        <div id="loader-container" style="display:none;">
+          <div class="loader"></div>
+          <p>Analyzing repositories... this may take a moment.</p>
+        </div>
+
+        <div id="results-grid" class="results-grid"></div>
+      </section>
+    </main>
+
+    <noscript>  
+      <div class="error">JavaScript is disabled. Please enable it to use RepoLens.</div>
+    </noscript>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
