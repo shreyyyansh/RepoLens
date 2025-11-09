@@ -3,6 +3,11 @@ from flask_cors import CORS
 import requests
 import os
 
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"status": "Backend awake"}), 200
+
+
 app = Flask(__name__)
 
 CCORS(app, resources={
