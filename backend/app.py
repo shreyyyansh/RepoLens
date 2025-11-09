@@ -3,11 +3,9 @@ from flask_cors import CORS
 import requests
 import os
 
-# ✅ Define app first
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Environment token (optional)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 GITHUB_HEADERS = {
@@ -15,13 +13,11 @@ GITHUB_HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
 
-# ✅ Root test route (for cron keep-alive)
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"status": "ok", "message": "RepoLens backend is alive"}), 200
 
 
-# ✅ Analyze route
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
@@ -69,6 +65,5 @@ def analyze():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
-# ✅ Only for local testing
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
