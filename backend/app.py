@@ -5,11 +5,18 @@ import os
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": [
-    "http://127.0.0.1:5500",
-    "https://shreyyyansh.github.io",
-    "*"
-]}})
+CCORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://shreyyyansh.github.io",  # GitHub Pages
+            "https://repolens-backend.onrender.com",  # Backend (Render)
+            "http://localhost:5000",  # Local testing
+            "http://127.0.0.1:5500"  # Local VS Code live server
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # check_at_last
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
