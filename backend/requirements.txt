@@ -1,2 +1,5 @@
 flask
 requests
+Flask==3.1.2
+requests==2.32.5
+gunicorn==22.0.0

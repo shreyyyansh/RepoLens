@@ -6,9 +6,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# ------------------------------------------------------------
-# 🔐 GitHub Token Configuration
-# ------------------------------------------------------------
+
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 GITHUB_HEADERS = {
@@ -20,9 +18,7 @@ GITHUB_HEADERS = {
 @app.route('/analyze', methods=['POST'])
 def analyze():
     try:
-        # ---------------------------
-        # 1️⃣ Validate Request
-        # ---------------------------
+       
         data = request.get_json()
         if not data or "org" not in data:
             return jsonify({"error": "Request body must include 'org' key"}), 400
@@ -33,9 +29,7 @@ def analyze():
 
         print(f"[INFO] Analyzing organization: {org}")
 
-        # ---------------------------
-        # 2️⃣ GitHub API Call (Fetch Repositories)
-        # ---------------------------
+        
         github_url = f'https://api.github.com/orgs/{org}/repos?type=public&per_page=5&sort=pushed'
 
         try:
@@ -81,9 +75,7 @@ def analyze():
             print("[ERROR] General GitHub API failure:", e)
             return jsonify({"error": f"GitHub API failed: {str(e)}"}), 500
 
-        # ---------------------------
-        # 3️⃣ Process Repository Data
-        # ---------------------------
+        
         report = []
         for repo in repos:
             if not isinstance(repo, dict):
@@ -112,9 +104,7 @@ def analyze():
                 "report": []
             }), 200
 
-        # ---------------------------
-        # 4️⃣ Final Success Response
-        # ---------------------------
+       
         return jsonify({
             "message": f"Successfully analyzed {len(report)} repositories for '{org}'.",
             "report": report
@@ -125,9 +115,6 @@ def analyze():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
-# ------------------------------------------------------------
-# 🧩 App Entry Point
-# ------------------------------------------------------------
 if __name__ == '__main__':
     print("[INFO] Starting Flask backend server...")
     app.run(debug=True)
