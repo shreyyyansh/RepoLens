@@ -4,9 +4,14 @@ import requests
 import os
 
 app = Flask(__name__)
-CORS(app)
 
+CORS(app, resources={r"/*": {"origins": [
+    "http://127.0.0.1:5500",
+    "https://shreyyyansh.github.io",
+    "*"
+]}})
 
+# check_at_last
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 GITHUB_HEADERS = {
@@ -15,10 +20,15 @@ GITHUB_HEADERS = {
 }
 
 
+@app.route('/')
+def home():
+    """Simple root route to check if the backend is live"""
+    return jsonify({"message": "✅ RepoLens Backend is running successfully!"})
+
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     try:
-       
         data = request.get_json()
         if not data or "org" not in data:
             return jsonify({"error": "Request body must include 'org' key"}), 400
@@ -27,65 +37,33 @@ def analyze():
         if not org:
             return jsonify({"error": "Organization name cannot be empty"}), 400
 
-        print(f"[INFO] Analyzing organization: {org}")
+        print(f"[INFO] 🔍 Analyzing organization: {org}")
 
-        
         github_url = f'https://api.github.com/orgs/{org}/repos?type=public&per_page=5&sort=pushed'
 
-        try:
-            response = requests.get(github_url, headers=GITHUB_HEADERS)
-            response.raise_for_status()
-            repos = response.json()
-
-            # Ensure repos is a list (not error message)
-            if not isinstance(repos, list):
-                print("[WARNING] Unexpected GitHub response:", repos)
-                raise ValueError("Unexpected API response format")
-
-        except requests.exceptions.HTTPError as http_err:
-            # Handle specific GitHub errors
-            error_text = str(http_err)
-            print(f"[ERROR] GitHub API error: {error_text}")
-
-            # Rate limit issue
-            if "403" in error_text and "rate limit" in error_text.lower():
-                return jsonify({
-                    "error": "GitHub rate limit exceeded. Wait a few minutes or set a valid token."
-                }), 429
-
-            # Org not found — attempt suggestion
-            suggestions = []
-            try:
-                search_url = f"https://api.github.com/search/users?q={org}+type:org"
-                search_resp = requests.get(search_url, headers=GITHUB_HEADERS)
-                if search_resp.ok:
-                    search_data = search_resp.json() or {}
-                    items = search_data.get("items", [])
-                    if isinstance(items, list):
-                        suggestions = [i.get("login", "") for i in items if i.get("login")]
-            except Exception as s_err:
-                print("[ERROR] Failed to fetch suggestions:", s_err)
-
+        response = requests.get(github_url, headers=GITHUB_HEADERS)
+        if response.status_code == 404:
+            return jsonify({"error": f"GitHub organization '{org}' not found."}), 404
+        elif response.status_code == 403:
             return jsonify({
-                "error": f"GitHub organization '{org}' not found.",
-                "suggestions": suggestions
-            }), 404
+                "error": "GitHub rate limit exceeded. Please try again later or add a valid token."
+            }), 429
+        elif not response.ok:
+            return jsonify({"error": f"GitHub API error: {response.text}"}), 500
 
-        except Exception as e:
-            print("[ERROR] General GitHub API failure:", e)
-            return jsonify({"error": f"GitHub API failed: {str(e)}"}), 500
+        repos = response.json()
+        if not isinstance(repos, list):
+            print("[WARNING] Unexpected response:", repos)
+            return jsonify({"error": "Unexpected API response format"}), 500
 
-        
         report = []
         for repo in repos:
-            if not isinstance(repo, dict):
-                continue
-
             repo_name = repo.get('name', 'N/A')
             desc = repo.get('description') or "No description available."
             stars = repo.get('stargazers_count', 0)
             language = repo.get('language') or "N/A"
             url = repo.get('html_url', '#')
+            last_push = repo.get('pushed_at', 'Unknown')
 
             summary = f"This repository focuses on {desc[:80]}..."
 
@@ -95,7 +73,9 @@ def analyze():
                 "stars": stars,
                 "language": language,
                 "github_url": url,
-                "ai_summary": summary
+                "last_push": last_push,
+                "ai_summary": summary,
+                "activity_status": "Active" if stars > 0 else "Inactive"
             })
 
         if not report:
@@ -104,7 +84,6 @@ def analyze():
                 "report": []
             }), 200
 
-       
         return jsonify({
             "message": f"Successfully analyzed {len(report)} repositories for '{org}'.",
             "report": report
@@ -116,5 +95,5 @@ def analyze():
 
 
 if __name__ == '__main__':
-    print("[INFO] Starting Flask backend server...")
-    app.run(debug=True)
+    print("[INFO] 🚀 Starting Flask backend server...")
+    app.run(host='0.0.0.0', port=5000, debug=True)
